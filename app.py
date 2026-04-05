@@ -33,7 +33,7 @@ def init_gsheets():
     creds = Credentials.from_service_account_info(st.secrets["gcp_service_account"], scopes=scope)
     client = gspread.authorize(creds)
     # ⚠️ 請確保這裡的名稱與你的 Google 試算表名稱完全一致
-    sheet = client.open("3DGSIQA_MOS").sheet1 
+    sheet = client.open_by_url("https://docs.google.com/spreadsheets/d/1A2WuW6iruRaHzK0-WmoAQksVSfV04FFwJl6iUs88B5I/edit?gid=0#gid=0").sheet1
     return sheet
 
 def assign_least_rated_folder(sheet):
