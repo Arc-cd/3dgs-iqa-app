@@ -107,7 +107,7 @@ def resize_and_crop(img_path, target_aspect_ratio=(16, 9), target_width=800):
 if not st.session_state.has_started:
     st.title("📝 3DGS 影像品質評估 (IQA) - 評分指南")
     st.markdown("""
-    ### 🎯 評分標準 (0 = 嚴重瑕疵, 10 = 無瑕疵)
+    ### 評分標準 (0 = 嚴重瑕疵, 10 = 無瑕疵)
     <div style="font-size: 22px; line-height: 1.6;">
         <p>請對照 Reference (參考影像)，根據以下兩個主要維度來決定每個瑕疵項目的扣分程度：</p>
         <ol>
