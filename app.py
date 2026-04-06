@@ -5,6 +5,7 @@ from PIL import Image
 import re
 import uuid
 import os
+import random
 import gspread
 from google.oauth2.service_account import Credentials
 
@@ -33,11 +34,11 @@ def init_gsheets():
     creds = Credentials.from_service_account_info(st.secrets["gcp_service_account"], scopes=scope)
     client = gspread.authorize(creds)
     # ⚠️ 請確保這裡的名稱與你的 Google 試算表名稱完全一致
-    sheet = client.open("3DGSIQA_MOS").sheet1 
+    sheet = client.open_by_url("https://docs.google.com/spreadsheets/d/1A2WuW6iruRaHzK0-WmoAQksVSfV04FFwJl6iUs88B5I/edit?gid=0#gid=0").sheet1
     return sheet
 
 def assign_least_rated_folder(sheet):
-    """計算目前各資料夾的完成數，並指派最少人評分的資料夾"""
+    """計算目前各資料夾的完成數，並在平手時隨機指派最少人評分的資料夾"""
     folders = [f"Image({chr(65+i)})" for i in range(10)] # Image(A) 到 Image(J)
     try:
         # 抓取試算表第 2 欄 (Folder欄位) 的所有值
@@ -46,8 +47,15 @@ def assign_least_rated_folder(sheet):
     except Exception:
         counts = {f: 0 for f in folders}
         
-    # 回傳次數最少的資料夾名稱
-    assigned = min(counts, key=counts.get)
+    # 1. 找出目前最少的次數是多少 (例如 0 次)
+    min_count = min(counts.values())
+    
+    # 2. 把所有符合這個「最少次數」的資料夾挑出來，放進候選名單
+    candidates = [folder for folder, count in counts.items() if count == min_count]
+    
+    # 3. 從候選名單中「隨機」抽籤決定派發哪一個
+    assigned = random.choice(candidates)
+    
     return assigned
 
 # 狀態初始化
