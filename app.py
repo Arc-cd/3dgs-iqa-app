@@ -20,52 +20,41 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# 確保放圖例的資料夾存在
 os.makedirs("assets", exist_ok=True) 
 
-# ==========================================
-# 1. Google Sheets 連線與負載平衡 (Load Balancing) 邏輯
-# ==========================================
+
 @st.cache_resource
 def init_gsheets():
-    """初始化並快取 Google Sheets 連線"""
     scope = ['https://www.googleapis.com/auth/spreadsheets']
-    # 從 Streamlit Secrets 讀取金鑰
     creds = Credentials.from_service_account_info(st.secrets["gcp_service_account"], scopes=scope)
     client = gspread.authorize(creds)
-    # ⚠️ 請確保這裡的名稱與你的 Google 試算表名稱完全一致
     sheet = client.open_by_url("https://docs.google.com/spreadsheets/d/1A2WuW6iruRaHzK0-WmoAQksVSfV04FFwJl6iUs88B5I/edit?gid=0#gid=0").sheet1
     return sheet
 
 def assign_least_rated_folder(sheet):
-    """計算目前各資料夾的完成數，並在平手時隨機指派最少人評分的資料夾"""
-    folders = [f"Image({chr(65+i)})" for i in range(10)] # Image(A) 到 Image(J)
+    folders = [f"Image({chr(65+i)})" for i in range(10)] 
     try:
-        # 抓取試算表第 2 欄 (Folder欄位) 的所有值
         existing_folders = sheet.col_values(2)[1:] 
         counts = {f: existing_folders.count(f) for f in folders}
     except Exception:
         counts = {f: 0 for f in folders}
         
-    # 1. 找出目前最少的次數是多少 (例如 0 次)
+
     min_count = min(counts.values())
-    
-    # 2. 把所有符合這個「最少次數」的資料夾挑出來，放進候選名單
+
     candidates = [folder for folder, count in counts.items() if count == min_count]
     
-    # 3. 從候選名單中「隨機」抽籤決定派發哪一個
     assigned = random.choice(candidates)
     
     return assigned
 
-# 狀態初始化
+# init
 if 'user_id' not in st.session_state:
     st.session_state.user_id = str(uuid.uuid4())[:8]
 if 'has_started' not in st.session_state:
     st.session_state.has_started = False
 if 'sheet' not in st.session_state:
     st.session_state.sheet = init_gsheets()
-# 動態指派資料夾給該位受測者
 if 'assigned_folder' not in st.session_state:
     st.session_state.assigned_folder = assign_least_rated_folder(st.session_state.sheet)
 if 'current_idx' not in st.session_state:
@@ -75,9 +64,6 @@ if 'ratings' not in st.session_state:
 if 'is_submitted' not in st.session_state:
     st.session_state.is_submitted = False
 
-# ==========================================
-# 輔助函式：調整圖片比例
-# ==========================================
 def resize_and_crop(img_path, target_aspect_ratio=(16, 9), target_width=800):
     if not img_path.exists(): return None
     try:
@@ -101,15 +87,14 @@ def resize_and_crop(img_path, target_aspect_ratio=(16, 9), target_width=800):
     right, bottom = (new_width + target_width) / 2, (new_height + target_height) / 2
     return img_resized.crop((left, top, right, bottom))
 
-# ==========================================
-# 歡迎頁與評分指南 (Guideline)
-# ==========================================
+
+# Guideline part
 if not st.session_state.has_started:
     st.title("📝 3DGS 影像品質評估 (IQA) - 評分指南")
     st.markdown("""
     ### 評分標準 (0 = 嚴重瑕疵, 10 = 無瑕疵)
     <div style="font-size: 22px; line-height: 1.6;">
-        <p>請對照 Reference (參考影像)，根據以下兩個主要維度來決定每個瑕疵項目的扣分程度：</p>
+        <p>對照畫面左側 Reference (參考影像)，根據以下兩個主要維度來決定每個瑕疵項目的扣分程度：</p>
         <ol>
             <li><b>瑕疵覆蓋面積</b>：瑕疵在畫面上佔據的比例越大、範圍越廣，分數應越低。</li>
             <li><b>顏色與結構差異</b>：瑕疵的顏色或形狀與 Reference 差異越明顯、在畫面上越突兀，分數應越低。</li>
@@ -148,12 +133,10 @@ if not st.session_state.has_started:
 
 if st.session_state.is_submitted:
     st.balloons()
-    st.success("🎉 評分已成功送出！非常感謝您的參與。")
+    st.success("評分已成功送出！非常感謝您的參與。")
     st.stop() 
 
-# ==========================================
-# 2. 輔助函式：根據 Render 檔名找對應 Reference
-# ==========================================
+
 def get_ref_path(render_stem, ref_dir):
     if not ref_dir.exists(): return None
     m = re.match(r'^(.*?_cam\d+)\b', render_stem)
@@ -163,12 +146,10 @@ def get_ref_path(render_stem, ref_dir):
             return p
     return None
 
-# ==========================================
-# 3. 讀取「被分配到的資料夾」中的圖片
-# ==========================================
+
+# 3. Load images
 @st.cache_data
 def load_image_list(folder_name):
-    # 路徑改為 renders / 被分配的子資料夾
     target_dir = Path("renders") / folder_name 
     refs_dir = Path("refs")
     
@@ -179,8 +160,18 @@ def load_image_list(folder_name):
     render_paths = sorted([p for p in target_dir.iterdir() if p.suffix.lower() in valid_exts])
     return render_paths, target_dir, refs_dir
 
-# 載入該受測者專屬的圖片集
-render_paths, renders_dir, refs_dir = load_image_list(st.session_state.assigned_folder)
+base_render_paths, renders_dir, refs_dir = load_image_list(st.session_state.assigned_folder)
+
+if not base_render_paths:
+    st.error(f"Image not found `renders/{st.session_state.assigned_folder}` ")
+    st.stop()
+
+if 'shuffled_paths' not in st.session_state:
+    paths_copy = base_render_paths.copy() 
+    random.shuffle(paths_copy)           
+    st.session_state.shuffled_paths = paths_copy 
+
+render_paths = st.session_state.shuffled_paths
 
 if not render_paths:
     st.error(f"找不到圖片！請確保 `renders/{st.session_state.assigned_folder}` 資料夾存在且包含圖片。")
@@ -210,7 +201,7 @@ with col1:
     if ref_path and ref_path.exists():
         st.image(Image.open(ref_path), use_container_width=True)
     else:
-        st.info(f"找不到對應的 Reference，正在搜尋關鍵字: {img_name}")
+        st.info(f" Reference not found: {img_name}")
 
 with col2:
     st.markdown("### Render")
@@ -241,7 +232,6 @@ def next_img():
     if st.session_state.current_idx < total - 1: st.session_state.current_idx += 1
 
 def submit_data():
-    # 將每一張圖片的評分轉為一行 Row，寫入 Google Sheets
     rows_to_insert = []
     for img, ratings in st.session_state.ratings.items():
         rows_to_insert.append([
@@ -254,7 +244,6 @@ def submit_data():
             ratings['overall']
         ])
     
-    # 一次性將 20 筆資料寫入試算表
     st.session_state.sheet.append_rows(rows_to_insert)
     st.session_state.is_submitted = True
 
@@ -262,6 +251,6 @@ btn_col1, btn_col2, btn_col3 = st.columns([1, 1, 6])
 with btn_col1: st.button("⬅️ 上一張", on_click=prev_img, disabled=(idx == 0))
 with btn_col2:
     if idx == total - 1:
-        st.button("🚀 送出評分", on_click=submit_data, type="primary")
+        st.button("送出評分", on_click=submit_data, type="primary")
     else:
         st.button("下一張 ➡️", on_click=next_img)
