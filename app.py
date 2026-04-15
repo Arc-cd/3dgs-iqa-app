@@ -238,18 +238,26 @@ img_name = current_render_path.stem
 st.title("3DGS Subjective IQA")
 st.subheader(f"Images：{idx + 1} / {total}")
 
+@st.dialog("🔍放大檢視影像", width="large")
+def show_large_image(image_path, title):
+    st.image(Image.open(image_path), caption=title, use_container_width=True)
+
 col1, col2 = st.columns(2)
 with col1:
     st.markdown("### Reference")
     ref_path = get_ref_path(img_name, refs_dir)
     if ref_path and ref_path.exists():
         st.image(Image.open(ref_path), use_container_width=True)
+        if st.button("🔍 放大 Reference", key="btn_zoom_ref", use_container_width=True):
+            show_large_image(ref_path, "Reference (參考原圖)")
     else:
         st.info(f" Reference not found: {img_name}")
 
 with col2:
     st.markdown("### Render")
     st.image(Image.open(current_render_path), use_container_width=True)
+    if st.button("🔍 放大 Render", key="btn_zoom_render", use_container_width=True):
+        show_large_image(current_render_path, "Render (3DGS 渲染圖)")
 
 st.divider()
 @st.fragment
