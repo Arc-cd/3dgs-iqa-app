@@ -63,6 +63,8 @@ if 'ratings' not in st.session_state:
     st.session_state.ratings = {}
 if 'is_submitted' not in st.session_state:
     st.session_state.is_submitted = False
+if 'show_guideline_overlay' not in st.session_state:
+    st.session_state.show_guideline_overlay = False
 
 def resize_and_crop(img_path, target_aspect_ratio=(16, 9), target_width=800):
     if not img_path.exists(): return None
@@ -110,13 +112,13 @@ if not st.session_state.has_started:
     row1_col1, row1_col2 = st.columns(2)
     
     with row1_col1:
-        st.markdown("#### 1. Blur (模糊)")
+        st.markdown("#### 1. Blur (模糊瑕疵)")
         img_blur = resize_and_crop(Path("assets/blur_example.png"), TARGET_RATIO, TARGET_DISPLAY_WIDTH)
         if img_blur: st.image(img_blur, use_container_width=True)
         st.markdown("**特徵**：細節遺失、紋理過度平滑，失去原本的銳利度。")
         
     with row1_col2:
-        st.markdown("#### 2. Needle (針狀物)")
+        st.markdown("#### 2. Needle (針狀瑕疵)")
         img_needle = resize_and_crop(Path("assets/needle_example.png"), TARGET_RATIO, TARGET_DISPLAY_WIDTH)
         if img_needle: st.image(img_needle, use_container_width=True)
         st.markdown("**特徵**：物體表面或邊緣出現不自然的尖刺狀、針狀延伸。")
@@ -124,7 +126,7 @@ if not st.session_state.has_started:
     st.divider() # 加入分隔線讓區塊更明確
 
     # --- 第二排：Floater 的兩種細分類型 ---
-    st.markdown("#### 3. Floater (漂浮物 - 兩種類型說明)")
+    st.markdown("#### 3. Floater ")
     row2_col1, row2_col2 = st.columns(2)
     
     with row2_col1:
@@ -140,9 +142,12 @@ if not st.session_state.has_started:
     st.divider()
     _, btn_col, _ = st.columns([1, 2, 1])
     with btn_col:
-        def start_experiment():
-            st.session_state.has_started = True
-        st.button("✅ 我已了解評分標準，開始進行評分", type="primary", use_container_width=True, on_click=start_experiment)
+        if not st.session_state.has_started:
+            st.button("✅ 我已了解評分標準，開始進行評分", type="primary", use_container_width=True, on_click=start_experiment)
+        else:
+            if st.button("⬅️ 返回評分", type="primary", use_container_width=True):
+                st.session_state.show_guideline_overlay = False
+                st.rerun() 
     st.stop()
 
 if st.session_state.is_submitted:
@@ -193,6 +198,8 @@ if not render_paths:
 
 with st.sidebar:
     st.title("評分指南 (Guidelines)")
+    if st.button("📖重新查看評分指南", use_container_width=True):
+        st.session_state.show_guideline_overlay = True
     st.markdown("""
     * **Floater**: 空白處出現的漂浮瑕疵或異常顏色的霧狀瑕疵。
     * **Needle**: 物體表面或邊緣出現的針狀/刺狀瑕疵。
@@ -221,20 +228,22 @@ with col2:
     st.image(Image.open(current_render_path), use_container_width=True)
 
 st.divider()
-st.markdown("### 評分 (0 = 嚴重瑕疵, 10 = 無瑕疵)")
+@st.fragment
+def rating_sliders_section():
+    current_ratings = st.session_state.ratings.get(img_name, {'floater': 0, 'blur': 0, 'needle': 0, 'overall': 0})
 
-current_ratings = st.session_state.ratings.get(img_name, {'floater': 0, 'blur': 0, 'needle': 0, 'overall': 0})
+    def update_rating(metric):
+        if img_name not in st.session_state.ratings:
+            st.session_state.ratings[img_name] = {'floater': 0, 'blur': 0, 'needle': 0, 'overall': 0}
+        st.session_state.ratings[img_name][metric] = st.session_state[f"{metric}_{img_name}"]
 
-def update_rating(metric):
-    if img_name not in st.session_state.ratings:
-        st.session_state.ratings[img_name] = {'floater': 0, 'blur': 0, 'needle': 0, 'overall': 0}
-    st.session_state.ratings[img_name][metric] = st.session_state[f"{metric}_{img_name}"]
+    c1, c2, c3, c4 = st.columns(4)
+    with c1: st.slider("Floater", 0, 10, current_ratings['floater'], key=f"floater_{img_name}", on_change=update_rating, args=('floater',))
+    with c2: st.slider("Blur", 0, 10, current_ratings['blur'], key=f"blur_{img_name}", on_change=update_rating, args=('blur',))
+    with c3: st.slider("Needle", 0, 10, current_ratings['needle'], key=f"needle_{img_name}", on_change=update_rating, args=('needle',))
+    with c4: st.slider("Overall", 0, 10, current_ratings['overall'], key=f"overall_{img_name}", on_change=update_rating, args=('overall',))
 
-c1, c2, c3, c4 = st.columns(4)
-with c1: st.slider("Floater", 0, 10, current_ratings['floater'], key=f"floater_{img_name}", on_change=update_rating, args=('floater',))
-with c2: st.slider("Blur", 0, 10, current_ratings['blur'], key=f"blur_{img_name}", on_change=update_rating, args=('blur',))
-with c3: st.slider("Needle", 0, 10, current_ratings['needle'], key=f"needle_{img_name}", on_change=update_rating, args=('needle',))
-with c4: st.slider("Overall", 0, 10, current_ratings['overall'], key=f"overall_{img_name}", on_change=update_rating, args=('overall',))
+rating_sliders_section()
 
 st.divider()
 
