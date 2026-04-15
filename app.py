@@ -8,6 +8,7 @@ import os
 import random
 import gspread
 from google.oauth2.service_account import Credentials
+from streamlit_image_comparison import image_comparison
 
 st.set_page_config(page_title="3DGS IQA Annotation", layout="wide")
 
@@ -174,14 +175,13 @@ if 'shuffled_paths' not in st.session_state:
 render_paths = st.session_state.shuffled_paths
 
 if not render_paths:
-    st.error(f"找不到圖片！請確保 `renders/{st.session_state.assigned_folder}` 資料夾存在且包含圖片。")
+    st.error(f"Image not found `renders/{st.session_state.assigned_folder}` ")
     st.stop()
 
 with st.sidebar:
     st.title("評分指南 (Guidelines)")
-    st.markdown(f"**目前評分組別:** {st.session_state.assigned_folder}")
     st.markdown("""
-    * **Floater**: 空白處出現的漂浮瑕疵。
+    * **Floater**: 空白處出現的漂浮物或黑/白霧狀瑕疵。
     * **Needle**: 物體表面或邊緣出現的針狀/刺狀瑕疵。
     * **Blur**: 細節遺失、過度平滑。
     """)
@@ -194,38 +194,26 @@ img_name = current_render_path.stem
 st.title("3DGS Subjective IQA")
 st.subheader(f"Images：{idx + 1} / {total}")
 
+st.markdown("### 🔍 影像比對 (左右滑動拉桿)")
+
+# 取得 Reference 路徑
 ref_path = get_ref_path(img_name, refs_dir)
 
-@st.dialog("放大比對模式 (Press ESC to close)", width="large")
-def show_large_comparison(ref_p, render_p):
-    popup_col1, popup_col2 = st.columns(2)
-    with popup_col1:
-        st.markdown("<h3 style='text-align: center;'>Reference</h3>", unsafe_allow_html=True)
-        if ref_p and ref_p.exists():
-            st.image(Image.open(ref_p), use_container_width=True)
-        else:
-            st.info("找不到 Reference 影像")
-            
-    with popup_col2:
-        st.markdown("<h3 style='text-align: center;'>Render</h3>", unsafe_allow_html=True)
-        st.image(Image.open(render_p), use_container_width=True)
-
-_, btn_center, _ = st.columns([1, 2, 1])
-with btn_center:
-    st.button("🔍 放大比對", on_click=show_large_comparison, args=(ref_path, current_render_path), use_container_width=True)
-
-st.divider()
-col1, col2 = st.columns(2)
-with col1:
-    st.markdown("### Reference")
-    if ref_path and ref_path.exists():
-        st.image(Image.open(ref_path), use_container_width=True)
-    else:
-        st.info(f"找不到對應的 Reference，正在搜尋關鍵字: {img_name}")
-
-with col2:
-    st.markdown("### Render")
-    st.image(Image.open(current_render_path), use_container_width=True)
+if ref_path and ref_path.exists():
+    # 使用 image_comparison 顯示滑動對比圖
+    image_comparison(
+        img1=str(ref_path),
+        img2=str(current_render_path),
+        label1="Reference",
+        label2="Render",
+        starting_position=50, # 滑桿初始位置在正中間 (50%)
+        make_responsive=True, # 自動適應網頁寬度
+        in_memory=True        # 在記憶體中處理，避免雲端路徑讀取問題
+    )
+else:
+    # 如果真的找不到 Reference，就退回原本的單張顯示模式
+    st.info(f"找不到對應的 Reference，正在搜尋關鍵字: {img_name}")
+    st.image(Image.open(current_render_path), caption="Render", use_container_width=True)
 
 st.divider()
 st.markdown("### 評分 (0 = 嚴重瑕疵, 10 = 無瑕疵)")
