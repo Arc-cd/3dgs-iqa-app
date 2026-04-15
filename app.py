@@ -164,7 +164,7 @@ def get_ref_path(render_stem, ref_dir):
     m = re.match(r'^(.*?_cam\d+)\b', render_stem)
     key = m.group(1) if m else render_stem.rsplit('_', 1)[0] if '_' in render_stem else render_stem
     for p in ref_dir.iterdir():
-        if key.lower() in p.stem.lower():
+        if key.lower() == p.stem.lower():
             return p
     return None
 
@@ -201,7 +201,7 @@ if not render_paths:
 
 with st.sidebar:
     st.title("評分指南 (Guidelines)")
-    if st.button("📖重新查看評分指南", use_container_width=True):
+    if st.button("📖重新查看指南", use_container_width=True):
         st.session_state.show_guideline_overlay = True
     st.markdown("""
     * **Floater**: 空白處出現的漂浮瑕疵或異常顏色的霧狀瑕疵。
