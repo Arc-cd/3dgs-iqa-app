@@ -91,7 +91,7 @@ def resize_and_crop(img_path, target_aspect_ratio=(16, 9), target_width=800):
 
 
 # Guideline part
-if not st.session_state.has_started:
+if not st.session_state.has_started or st.session_state.show_guideline_overlay:
     st.title("📝 3DGS 影像品質評估 (IQA) - 評分指南")
     st.markdown("""
     ### 評分標準 (0 = 嚴重瑕疵, 10 = 無瑕疵)
