@@ -105,23 +105,37 @@ if not st.session_state.has_started:
     st.markdown("### 🖼️ 瑕疵類型圖例說明")
     
     TARGET_RATIO, TARGET_DISPLAY_WIDTH = (16, 9), 800
-    c1, c2, c3 = st.columns(3)
     
-    with c1:
+    # --- 第一排：Blur 與 Needle ---
+    row1_col1, row1_col2 = st.columns(2)
+    
+    with row1_col1:
         st.markdown("#### 1. Blur (模糊)")
         img_blur = resize_and_crop(Path("assets/blur_example.png"), TARGET_RATIO, TARGET_DISPLAY_WIDTH)
         if img_blur: st.image(img_blur, use_container_width=True)
         st.markdown("**特徵**：細節遺失、紋理過度平滑，失去原本的銳利度。")
-    with c2:
-        st.markdown("#### 2. Floater (漂浮物)")
-        img_floater = resize_and_crop(Path("assets/floater_example.png"), TARGET_RATIO, TARGET_DISPLAY_WIDTH)
-        if img_floater: st.image(img_floater, use_container_width=True)
-        st.markdown("**特徵**：在不該有物體的空白處出現的塊狀或點狀雜點。")
-    with c3:
-        st.markdown("#### 3. Needle (針狀物)")
+        
+    with row1_col2:
+        st.markdown("#### 2. Needle (針狀物)")
         img_needle = resize_and_crop(Path("assets/needle_example.png"), TARGET_RATIO, TARGET_DISPLAY_WIDTH)
         if img_needle: st.image(img_needle, use_container_width=True)
         st.markdown("**特徵**：物體表面或邊緣出現不自然的尖刺狀、針狀延伸。")
+
+    st.divider() # 加入分隔線讓區塊更明確
+
+    # --- 第二排：Floater 的兩種細分類型 ---
+    st.markdown("#### 3. Floater (漂浮物 - 兩種類型說明)")
+    row2_col1, row2_col2 = st.columns(2)
+    
+    with row2_col1:
+        img_floater_1 = resize_and_crop(Path("assets/floater_type_a.png"), TARGET_RATIO, TARGET_DISPLAY_WIDTH)
+        if img_floater_1: st.image(img_floater_1, use_container_width=True)
+        st.markdown("**特徵**：在不該有物體的空白處出現的塊狀或點狀雜點。")
+        
+    with row2_col2:
+        img_floater_2 = resize_and_crop(Path("assets/floater_type_b.png"), TARGET_RATIO, TARGET_DISPLAY_WIDTH)
+        if img_floater_2: st.image(img_floater_2, use_container_width=True)
+        st.markdown("**特徵**：Reference影像上沒有的異常顏色的霧狀瑕疵。")
         
     st.divider()
     _, btn_col, _ = st.columns([1, 2, 1])
@@ -180,7 +194,7 @@ if not render_paths:
 with st.sidebar:
     st.title("評分指南 (Guidelines)")
     st.markdown("""
-    * **Floater**: 空白處出現的漂浮物或黑/白霧狀瑕疵。
+    * **Floater**: 空白處出現的漂浮瑕疵或異常顏色的霧狀瑕疵。
     * **Needle**: 物體表面或邊緣出現的針狀/刺狀瑕疵。
     * **Blur**: 細節遺失、過度平滑。
     """)
