@@ -8,7 +8,6 @@ import os
 import random
 import gspread
 from google.oauth2.service_account import Credentials
-from streamlit_image_comparison import image_comparison
 
 st.set_page_config(page_title="3DGS IQA Annotation", layout="wide")
 
@@ -194,26 +193,18 @@ img_name = current_render_path.stem
 st.title("3DGS Subjective IQA")
 st.subheader(f"Images：{idx + 1} / {total}")
 
-st.markdown("### 🔍 影像比對 (左右滑動拉桿)")
+col1, col2 = st.columns(2)
+with col1:
+    st.markdown("### Reference")
+    ref_path = get_ref_path(img_name, refs_dir)
+    if ref_path and ref_path.exists():
+        st.image(Image.open(ref_path), use_container_width=True)
+    else:
+        st.info(f" Reference not found: {img_name}")
 
-# 取得 Reference 路徑
-ref_path = get_ref_path(img_name, refs_dir)
-
-if ref_path and ref_path.exists():
-    # 使用 image_comparison 顯示滑動對比圖
-    image_comparison(
-        img1=str(ref_path),
-        img2=str(current_render_path),
-        label1="Reference",
-        label2="Render",
-        starting_position=50, # 滑桿初始位置在正中間 (50%)
-        make_responsive=True, # 自動適應網頁寬度
-        in_memory=True        # 在記憶體中處理，避免雲端路徑讀取問題
-    )
-else:
-    # 如果真的找不到 Reference，就退回原本的單張顯示模式
-    st.info(f"找不到對應的 Reference，正在搜尋關鍵字: {img_name}")
-    st.image(Image.open(current_render_path), caption="Render", use_container_width=True)
+with col2:
+    st.markdown("### Render")
+    st.image(Image.open(current_render_path), use_container_width=True)
 
 st.divider()
 st.markdown("### 評分 (0 = 嚴重瑕疵, 10 = 無瑕疵)")
