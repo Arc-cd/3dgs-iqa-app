@@ -18,21 +18,25 @@ st.markdown("""
     .stButton > button { padding: 10px 24px !important; min-height: 50px !important; }
     .stButton > button p { font-size: 22px !important; font-weight: bold !important; }
     
-    button[title="View fullscreen"],
-    button[data-testid="StyledFullScreenButton"] {
-        transform: scale(2.0) translate(-5px, 5px) !important;
-        background-color: rgba(0, 0, 0, 0.6) !important; 
-        border-radius: 8px !important; 
+    div[data-testid="stImage"] button {
         opacity: 1 !important;
-        visibility: visible !important; 
-        display: block !important;
-        z-index: 9999 !important;
+        visibility: visible !important;
+        background-color: rgba(0, 0, 0, 0.6) !important;
+        transform: scale(2.0) !important;
+        transform-origin: top right !important; 
+        margin-top: 5px !important;
+        margin-right: 5px !important;
+        border-radius: 5px !important;
     }
     
-    button[title="View fullscreen"] svg,
-    button[data-testid="StyledFullScreenButton"] svg {
-        fill: white !important;
+    div[data-testid="stImage"] button svg {
         stroke: white !important;
+        fill: white !important;
+    }
+    
+    div[data-testid="stImage"] > div > div {
+        opacity: 1 !important;
+        visibility: visible !important;
     }
 </style>
 """, unsafe_allow_html=True)
