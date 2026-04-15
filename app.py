@@ -142,10 +142,13 @@ if not st.session_state.has_started:
     st.divider()
     _, btn_col, _ = st.columns([1, 2, 1])
     with btn_col:
+        def start_experiment():
+            st.session_state.has_started = True
+
         if not st.session_state.has_started:
             st.button("✅ 我已了解評分標準，開始進行評分", type="primary", use_container_width=True, on_click=start_experiment)
         else:
-            if st.button("⬅️ 返回評分", type="primary", use_container_width=True):
+            if st.button("⬅️ 返回評分進度", type="primary", use_container_width=True):
                 st.session_state.show_guideline_overlay = False
                 st.rerun() 
     st.stop()
