@@ -17,14 +17,20 @@ st.markdown("""
     .stSlider div[data-testid="stSliderTickBarMin"], .stSlider div[data-testid="stSliderTickBarMax"] { font-size: 16px !important; }
     .stButton > button { padding: 10px 24px !important; min-height: 50px !important; }
     .stButton > button p { font-size: 22px !important; font-weight: bold !important; }
-    button[title="View fullscreen"] {
+    
+    button[title="View fullscreen"],
+    button[data-testid="StyledFullScreenButton"] {
         transform: scale(2.0) translate(-5px, 5px) !important;
         background-color: rgba(0, 0, 0, 0.6) !important; 
         border-radius: 8px !important; 
         opacity: 1 !important;
         visibility: visible !important; 
+        display: block !important;
+        z-index: 9999 !important;
     }
-    button[title="View fullscreen"] svg {
+    
+    button[title="View fullscreen"] svg,
+    button[data-testid="StyledFullScreenButton"] svg {
         fill: white !important;
         stroke: white !important;
     }
