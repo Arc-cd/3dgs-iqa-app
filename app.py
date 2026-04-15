@@ -194,14 +194,34 @@ img_name = current_render_path.stem
 st.title("3DGS Subjective IQA")
 st.subheader(f"Images：{idx + 1} / {total}")
 
+ref_path = get_ref_path(img_name, refs_dir)
+
+@st.dialog("放大比對模式 (Press ESC to close)", width="large")
+def show_large_comparison(ref_p, render_p):
+    popup_col1, popup_col2 = st.columns(2)
+    with popup_col1:
+        st.markdown("<h3 style='text-align: center;'>Reference</h3>", unsafe_allow_html=True)
+        if ref_p and ref_p.exists():
+            st.image(Image.open(ref_p), use_container_width=True)
+        else:
+            st.info("找不到 Reference 影像")
+            
+    with popup_col2:
+        st.markdown("<h3 style='text-align: center;'>Render</h3>", unsafe_allow_html=True)
+        st.image(Image.open(render_p), use_container_width=True)
+
+_, btn_center, _ = st.columns([1, 2, 1])
+with btn_center:
+    st.button("🔍 放大比對", on_click=show_large_comparison, args=(ref_path, current_render_path), use_container_width=True)
+
+st.divider()
 col1, col2 = st.columns(2)
 with col1:
     st.markdown("### Reference")
-    ref_path = get_ref_path(img_name, refs_dir)
     if ref_path and ref_path.exists():
         st.image(Image.open(ref_path), use_container_width=True)
     else:
-        st.info(f" Reference not found: {img_name}")
+        st.info(f"找不到對應的 Reference，正在搜尋關鍵字: {img_name}")
 
 with col2:
     st.markdown("### Render")
